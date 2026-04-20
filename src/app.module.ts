@@ -28,6 +28,7 @@ import { QuizsModule } from './quizs/quizs.module';
 import { SocialMediaModule } from './social-media/social-media.module';
 import { WalletsModule } from './wallets/wallets.module';
 
+
 @Module({
   imports: [
     // ✅ Load .env globally
@@ -35,7 +36,7 @@ import { WalletsModule } from './wallets/wallets.module';
       isGlobal: true,
     }),
 
-    // ✅ Correct TypeORM async config
+    //  ✅ Correct TypeORM async config
     // TypeOrmModule.forRootAsync({
     //   inject: [ConfigService],
     //   useFactory: (config: ConfigService) => ({
@@ -49,16 +50,19 @@ import { WalletsModule } from './wallets/wallets.module';
     //     synchronize: true,
     //   }),
     // }),
-
+    
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,
       entities: [Organization, Admin], // Only main DB entities
+      autoLoadEntities: true,
       synchronize: true,
       ssl: {
         rejectUnauthorized: false,
       },
     }),
+
+    
 
 
 
