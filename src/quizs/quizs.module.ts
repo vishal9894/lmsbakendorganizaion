@@ -7,11 +7,8 @@ import { QuizsService } from './quizs.service';
 import { TenantManager } from '../database/tenant-manager.service';
 import { Organization } from '../organizations/entities/create-organization.entityes';
 import { Admin } from '../admin/entities/admin.entity';
-import { Quiz } from './entities/quiz-entity';
-import { Question } from './entities/question-entity';
-
 @Module({
-  imports: [TypeOrmModule.forFeature([Organization, Admin, Quiz, Question]), ConfigModule, JwtModule],
+  imports: [TypeOrmModule.forFeature([Organization, Admin]), ConfigModule, JwtModule],
   controllers: [QuizsController],
   providers: [QuizsService, TenantManager]
 })

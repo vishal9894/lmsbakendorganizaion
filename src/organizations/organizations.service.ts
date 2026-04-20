@@ -14,6 +14,9 @@ export class OrganizationsService {
   ) { }
 
   async createOrganization(name: string, dbUrl?: string) {
+    if (!name || typeof name !== 'string') {
+      throw new Error('Organization name is required and must be a string');
+    }
     const subdomain = slugify(name, { lower: true });
 
     const exists = await this.orgRepo.findOne({
