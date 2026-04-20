@@ -106,5 +106,6 @@ export class WalletsService {
             balance: savedWallet.balance,
             userId: savedWallet.userId,
         };
+        
     }
 }
