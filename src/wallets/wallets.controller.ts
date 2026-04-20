@@ -55,23 +55,27 @@ export class WalletsController {
     credit(
         @CurrentUser() user: CurrentUserData,
         @Param('userId') userId: string,
-        @Body('amount') amount: number,
+        @Body() dto: CreateWalletDto,
     ) {
         if (!user.subdomain) {
             throw new Error('Subdomain is required');
         }
-        return this.walletsService.credit(user.subdomain, userId, amount);
+        console.log('Credit request:', { userId, amount: dto.balance });
+        return this.walletsService.credit(user.subdomain, userId, dto.balance);
     }
 
     @Post('debit/:userId')
     debit(
         @CurrentUser() user: CurrentUserData,
         @Param('userId') userId: string,
-        @Body('amount') amount: number,
+        @Body() dto: CreateWalletDto,
     ) {
         if (!user.subdomain) {
             throw new Error('Subdomain is required');
         }
-        return this.walletsService.debit(user.subdomain, userId, amount);
+        console.log('Debit request:', { userId, amount: dto.balance });
+        return this.walletsService.debit(user.subdomain, userId, dto.balance);
     }
 }
+
+

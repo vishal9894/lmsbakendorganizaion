@@ -8,8 +8,8 @@ export class OrganizationsController {
   constructor(private orgService: OrganizationsService) { }
 
   @Post()
-  create(@Body() body: { name: string }) {
-    return this.orgService.createOrganization(body.name);
+  create(@Body() dto: CreateOrganizationDto) {
+    return this.orgService.createOrganization(dto.name, dto.db_url);
   }
   @Get()
   getAll() {
@@ -29,7 +29,7 @@ export class OrganizationsController {
   @Put(':id/status')
   updateStatus(@Param('id') id: string, @Body() dto: CreateOrganizationDto) {
 
-    
+
     return this.orgService.udpatestatus(id, dto.status);
   }
 }

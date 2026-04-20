@@ -13,7 +13,7 @@ export class OrganizationsService {
     private dataSource: DataSource, // ✅ inject this
   ) { }
 
-  async createOrganization(name: string) {
+  async createOrganization(name: string, dbUrl?: string) {
     const subdomain = slugify(name, { lower: true });
 
     const exists = await this.orgRepo.findOne({
@@ -22,22 +22,34 @@ export class OrganizationsService {
 
     if (exists) throw new Error('Subdomain already exists');
 
-    const dbName = `db_${subdomain}`;
+    let dbName: string;
+    let finalDbUrl: string;
 
-    // ✅ FIX: use injected datasource (already connected)
-    await this.dataSource.query(`CREATE DATABASE "${dbName}"`);
+    if (dbUrl) {
+      // Use provided external database URL (e.g., Supabase)
+      finalDbUrl = dbUrl;
+      // Extract db name from URL or use subdomain
+      try {
+        const url = new URL(dbUrl);
+        dbName = url.pathname.replace('/', '') || `db_${subdomain}`;
+      } catch {
+        dbName = `db_${subdomain}`;
+      }
+    } else {
+      // Create local database
+      dbName = `db_${subdomain}`;
+      await this.dataSource.query(`CREATE DATABASE "${dbName}"`);
 
-    // ⚠️ use env password instead of hardcoded
-    const password = process.env.DB_PASSWORD || 'postgres';
-
-    const dbUrl = `postgresql://postgres:${encodeURIComponent(password)}@localhost:5432/${dbName}`;
+      const password = process.env.DB_PASSWORD || 'postgres';
+      finalDbUrl = `postgresql://postgres:${encodeURIComponent(password)}@localhost:5432/${dbName}`;
+    }
 
     // 2. Save org
     const org = this.orgRepo.create({
       name,
       subdomain,
       db_name: dbName,
-      db_url: dbUrl,
+      db_url: finalDbUrl,
     });
 
     await this.orgRepo.save(org);
