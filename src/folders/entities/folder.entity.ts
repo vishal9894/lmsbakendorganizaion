@@ -22,6 +22,9 @@ export class Folder {
   @Column({ type: 'uuid', nullable: true })
   parentId?: string;
 
+  @Column({ default: false })
+  is_default!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 }

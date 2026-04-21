@@ -62,28 +62,44 @@ export class WalletsService {
         };
     }
 
-    async credit(subdomain: string, userId: string, amount: number) {
-        if (amount <= 0) {
-            throw new BadRequestException('Amount must be greater than 0');
-        }
-        const repo = await this.getRepo(subdomain);
-        let wallet = await repo.findOne({ where: { userId } });
+   async credit(subdomain: string, userId: string, amount: number) {
+  const creditAmount = Number(amount);
 
-        if (!wallet) {
-            // Auto-create wallet if not exists
-            wallet = repo.create({ userId, balance: amount });
-        } else {
-            wallet.balance = parseFloat((wallet.balance + amount).toFixed(2));
-        }
+  if (!creditAmount || isNaN(creditAmount) || creditAmount <= 0) {
+    throw new BadRequestException('Amount must be greater than 0');
+  }
 
-        const savedWallet = await repo.save(wallet);
-        return {
-            message: 'Wallet credited successfully',
-            balance: savedWallet.balance,
-            userId: savedWallet.userId,
-        };
-    }
+  const repo = await this.getRepo(subdomain);
 
+  let wallet = await repo.findOne({
+    where: { userId },
+  });
+
+  let newBalance = 0;
+
+  if (!wallet) {
+    newBalance = Number(creditAmount.toFixed(2));
+
+    wallet = repo.create({
+      userId,
+      balance: newBalance,
+    });
+  } else {
+    const currentBalance = Number(wallet.balance || 0);
+
+    newBalance = Number((currentBalance + creditAmount).toFixed(2));
+
+    wallet.balance = newBalance;
+  }
+
+  await repo.save(wallet);
+
+  return {
+    message: 'Wallet credited successfully',
+    balance: newBalance,
+    userId: wallet.userId,
+  };
+}
     async debit(subdomain: string, userId: string, amount: number) {
         if (amount <= 0) {
             throw new BadRequestException('Amount must be greater than 0');
@@ -99,12 +115,13 @@ export class WalletsService {
             throw new BadRequestException('Insufficient balance');
         }
 
-        wallet.balance = parseFloat((wallet.balance - amount).toFixed(2));
-        const savedWallet = await repo.save(wallet);
+        const newBalance = parseFloat((wallet.balance - amount).toFixed(2));
+        wallet.balance = newBalance;
+        await repo.save(wallet);
         return {
             message: 'Wallet debited successfully',
-            balance: savedWallet.balance,
-            userId: savedWallet.userId,
+            balance: newBalance,
+            userId: wallet.userId,
         };
     }
 }

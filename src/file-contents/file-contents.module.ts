@@ -8,10 +8,11 @@ import { TenantManager } from '../database/tenant-manager.service';
 import { Organization } from '../organizations/entities/create-organization.entityes';
 import { Admin } from '../admin/entities/admin.entity';
 import { S3Service } from '../common/services/s3.service';
+import { TestquestionService } from '../testquestion/testquestion.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Organization, Admin]), ConfigModule, JwtModule],
   controllers: [FileContentsController],
-  providers: [FileContentsService, TenantManager, S3Service]
+  providers: [FileContentsService, TenantManager, S3Service , TestquestionService]
 })
 export class FileContentsModule { }

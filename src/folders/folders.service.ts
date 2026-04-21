@@ -33,15 +33,37 @@ export class FoldersService {
         return tenantDataSource.getRepository(FileContent);
     }
 
-    async create(subdomain: string, createFolderDto: CreateFolderDto, ) {
+    private async ensureDefaultFolder(subdomain: string, repo: Repository<Folder>) {
+        const defaultFolder = await repo.findOne({ where: { is_default: true } });
+        if (!defaultFolder) {
+            const folder = repo.create({
+                name: 'General',
+                is_default: true,
+            });
+            await repo.save(folder);
+        }
+    }
+
+    async create(
+        subdomain: string,
+        createFolderDto: CreateFolderDto,
+        file?: Express.Multer.File,
+    ) {
         const repo = await this.getTenantRepo(subdomain);
 
-        // const imageUrl = await this.s3Service.upload(file, 'folders');
+        if (!createFolderDto.name || createFolderDto.name.trim() === '') {
+            throw new BadRequestException('Folder name is required');
+        }
+
+        let imageUrl: string | undefined;
+
+        if (file) {
+            imageUrl = await this.s3Service.upload(file, 'folders');
+        }
 
         const folder = repo.create({
-            name: createFolderDto.name,
-            
-            parentId: createFolderDto.parentId || undefined,
+            ...createFolderDto,
+            image: imageUrl,
         });
 
         await repo.save(folder);
@@ -54,10 +76,15 @@ export class FoldersService {
 
     async findAll(subdomain: string) {
         const repo = await this.getTenantRepo(subdomain);
+
         const folders = await repo.find({ order: { createdAt: 'DESC' } });
+
+        // Filter out folders with blank names
+        const validFolders = folders.filter(f => f.name && f.name.trim() !== '');
+
         return {
             message: 'Folders fetched successfully',
-            folders,
+            folders: validFolders,
         };
     }
 

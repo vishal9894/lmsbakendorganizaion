@@ -6,6 +6,7 @@ import { Organization } from '../organizations/entities/create-organization.enti
 import { TenantManager } from '../database/tenant-manager.service';
 import { CreateContentDto } from './dto/create-file-content-dto';
 import { S3Service } from '../common/services/s3.service';
+import { TestquestionService } from 'src/testquestion/testquestion.service';
 
 @Injectable()
 export class FileContentsService {
@@ -13,7 +14,8 @@ export class FileContentsService {
         @InjectRepository(Organization)
         private orgRepo: Repository<Organization>,
         private tenantManager: TenantManager,
-        private s3Service: S3Service
+        private s3Service: S3Service,
+        private testquestionService: TestquestionService
     ) { }
 
     private async getTenantRepo(subdomain: string) {
@@ -72,6 +74,20 @@ export class FileContentsService {
         };
     }
 
+    async findTestQuestions(subdomain: string, contentId: string) {
+        const repo = await this.getTenantRepo(subdomain);
+        const content = await repo.findOne({ where: { id: contentId, type: 'test' } });
+
+        if (!content) {
+            throw new NotFoundException('Content not found or not a test');
+        }
+
+        return {
+            message: 'Test questions fetched successfully',
+            content,
+        };
+    }
+
     async update(subdomain: string, id: string, updateContentDto: Partial<CreateContentDto>) {
         const repo = await this.getTenantRepo(subdomain);
         const content = await repo.findOne({ where: { id } });
@@ -97,10 +113,11 @@ export class FileContentsService {
             throw new NotFoundException('Content not found');
         }
 
+        await this.testquestionService.removeByContentId(subdomain, id);
         await repo.remove(content);
 
         return {
-            message: 'Content deleted successfully',
+            message: 'Content and associated test questions deleted successfully',
         };
     }
 }

@@ -17,10 +17,12 @@ import { FileContent } from '../file-contents/entities/file-content-entity';
 import { Quiz } from '../quizs/entities/quiz-entity';
 import { Question } from '../quizs/entities/question-entity';
 import { SocialMediaEntity } from '../social-media/entities/create-socialmedia-entityes';
+import { Teacher } from '../teachers/entities/teacher.entity';
 import { Wallet } from '../wallets/entities/create-wallet-entityes';
+import { CreateTestquestionEntity } from '../testquestion/entities/create-testquestion-entityes';
 
 // Entities that exist ONLY in tenant databases (not main platform DB)
-const TENANT_ENTITIES = [Admin, User, Folder, TopTeachers, SuperStream, Stream, TopStudents, Course, Banner, Role, Permission, Event, FileContent, Quiz, Question, SocialMediaEntity, Wallet];
+const TENANT_ENTITIES = [Admin, User, Folder, TopTeachers, SuperStream, Stream, TopStudents, Course, Banner, Role, Permission, Event, FileContent, Quiz, Question, SocialMediaEntity, Wallet, Teacher, CreateTestquestionEntity];
 
 @Injectable()
 export class TenantManager {

@@ -8,7 +8,7 @@ import { TenantAuthGuard, type TenantRequest } from '../common/guards/tenant-aut
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
-    @Post('register')
+    @Post('signup')
     register(@Body() dto: RegisterDto) {
         return this.usersService.createUser(dto);
     }

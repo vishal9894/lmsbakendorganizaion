@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put } from '@nes
 import { WalletsService } from './wallets.service';
 import { CreateWalletDto } from './dto/create-wallet-dto';
 import { UpdateWalletDto } from './dto/update-wallet-dto';
+import { TransactionWalletDto } from './dto/transaction-wallet-dto';
 import { TenantAuthGuard } from '../common/guards/tenant-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -55,26 +56,26 @@ export class WalletsController {
     credit(
         @CurrentUser() user: CurrentUserData,
         @Param('userId') userId: string,
-        @Body() dto: CreateWalletDto,
+        @Body() dto: TransactionWalletDto,
     ) {
         if (!user.subdomain) {
             throw new Error('Subdomain is required');
         }
-        console.log('Credit request:', { userId, amount: dto.balance });
-        return this.walletsService.credit(user.subdomain, userId, dto.balance);
+       
+        return this.walletsService.credit(user.subdomain, userId, dto.amount);
     }
 
     @Post('debit/:userId')
     debit(
         @CurrentUser() user: CurrentUserData,
         @Param('userId') userId: string,
-        @Body() dto: CreateWalletDto,
+        @Body() dto: TransactionWalletDto,
     ) {
         if (!user.subdomain) {
             throw new Error('Subdomain is required');
         }
-        console.log('Debit request:', { userId, amount: dto.balance });
-        return this.walletsService.debit(user.subdomain, userId, dto.balance);
+        console.log('Debit request:', { userId, amount: dto.amount });
+        return this.walletsService.debit(user.subdomain, userId, dto.amount);
     }
 }
 

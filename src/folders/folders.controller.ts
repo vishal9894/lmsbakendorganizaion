@@ -1,54 +1,48 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ForbiddenException } from '@nestjs/common';
 import { FoldersService } from './folders.service';
 import { CreateFolderDto } from './dto/create-folder-dto';
 import { UpdateFolderDto } from './dto/update-folder-dto';
 import { TenantAuthGuard } from '../common/guards/tenant-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserData } from '../common/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadedFile } from '@nestjs/common';
 
-interface CurrentUserData {
-    id: string;
-    email: string;
-    subdomain?: string;
-    organizationId?: string;
-}
 
 @Controller('folders')
 @UseGuards(TenantAuthGuard)
 export class FoldersController {
     constructor(private readonly foldersService: FoldersService) { }
 
+    private getSubdomain(user: CurrentUserData): string {
+        if (!user.subdomain) {
+            throw new ForbiddenException('Subdomain is required');
+        }
+        return user.subdomain;
+    }
+
     @Post()
     @UseInterceptors(FileInterceptor('image'))
     create(
         @CurrentUser() user: CurrentUserData,
         @Body() createFolderDto: CreateFolderDto,
-        @UploadedFile() file: Express.Multer.File,
+        @UploadedFile() file?: Express.Multer.File,
     ) {
-        if (!user.subdomain) {
-            throw new Error('Subdomain is required');
-        }
-       
-        return this.foldersService.create(user.subdomain, createFolderDto);
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.create(subdomain, createFolderDto);
     }
 
     @Get()
     findAll(@CurrentUser() user: CurrentUserData) {
-        if (!user.subdomain) {
-            throw new Error('Subdomain is required');
-        }
-        return this.foldersService.findAll(user.subdomain);
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.findAll(subdomain);
     }
     @Get(':id')
     findOne(
         @CurrentUser() user: CurrentUserData,
         @Param('id') id: string,
     ) {
-        if (!user.subdomain) {
-            throw new Error('Subdomain is required');
-        }
-        return this.foldersService.findOne(user.subdomain, id);
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.findOne(subdomain, id);
     }
 
     @Patch(':id')
@@ -57,10 +51,8 @@ export class FoldersController {
         @Param('id') id: string,
         @Body() updateFolderDto: UpdateFolderDto,
     ) {
-        if (!user.subdomain) {
-            throw new Error('Subdomain is required');
-        }
-        return this.foldersService.update(user.subdomain, id, updateFolderDto);
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.update(subdomain, id, updateFolderDto);
     }
 
     @Delete(':id')
@@ -68,11 +60,7 @@ export class FoldersController {
         @CurrentUser() user: CurrentUserData,
         @Param('id') id: string,
     ) {
-        if (!user.subdomain) {
-            throw new Error('Subdomain is required');
-        }
-        return this.foldersService.remove(user.subdomain, id);
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.remove(subdomain, id);
     }
 }
-
-

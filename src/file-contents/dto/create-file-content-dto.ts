@@ -26,7 +26,7 @@ export class CreateContentDto {
   access?: string;
 
   @IsOptional()
-  @IsString()
+  
   parentId?: string;
 
   // ================= VIDEO =================
@@ -63,36 +63,33 @@ export class CreateContentDto {
 
   // ================= TEST =================
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsString()
+  
   description?: string;
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsNumber()
+  
   duration?: number;
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
+  
   categories?: any[];
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsBoolean()
+  
+ 
   negativeMarking?: boolean;
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsNumber()
+  
+ 
   negativeMarks?: number;
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsString()
+ 
   testType?: string;
 
   @ValidateIf((o) => o.type === 'test')
-  @IsOptional()
-  @IsString()
+ 
   postedBy?: string;
+ 
 }

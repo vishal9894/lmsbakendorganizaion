@@ -15,8 +15,8 @@ export class Wallet {
         scale: 2,
         default: 0,
         transformer: {
-            to: (value: number) => value,
-            from: (value: string) => (value ? parseFloat(value) : 0),
+            to: (value: number) => value?.toString(),
+            from: (value: string) => value ? parseFloat(value) : 0,
         },
     })
     balance!: number;

@@ -15,7 +15,10 @@ interface CurrentUserData {
 @Controller('file-contents')
 @UseGuards(TenantAuthGuard)
 export class FileContentsController {
-    constructor(private readonly fileContentsService: FileContentsService) { }
+    constructor(private readonly fileContentsService: FileContentsService,
+        
+
+    ) { }
 
     @Post()
     @UseInterceptors(
@@ -44,6 +47,17 @@ export class FileContentsController {
             throw new Error('Subdomain is required');
         }
         return this.fileContentsService.findAll(user.subdomain);
+    }
+
+    @Get('test/:contentId')
+    findTestQuestions(
+        @CurrentUser() user: CurrentUserData,
+        @Param('contentId') contentId: string,
+    ) {
+        if (!user.subdomain) {
+            throw new Error('Subdomain is required');
+        }
+        return this.fileContentsService.findTestQuestions(user.subdomain, contentId);
     }
 
     @Get(':id')
