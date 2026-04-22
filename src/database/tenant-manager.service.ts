@@ -20,9 +20,10 @@ import { SocialMediaEntity } from '../social-media/entities/create-socialmedia-e
 import { Teacher } from '../teachers/entities/teacher.entity';
 import { Wallet } from '../wallets/entities/create-wallet-entityes';
 import { CreateTestquestionEntity } from '../testquestion/entities/create-testquestion-entityes';
+import { CreateSheetEntity } from '../omr-sheet/entities/create-sheet-entity';
 
 // Entities that exist ONLY in tenant databases (not main platform DB)
-const TENANT_ENTITIES = [Admin, User, Folder, TopTeachers, SuperStream, Stream, TopStudents, Course, Banner, Role, Permission, Event, FileContent, Quiz, Question, SocialMediaEntity, Wallet, Teacher, CreateTestquestionEntity];
+const TENANT_ENTITIES = [Admin, User, Folder, TopTeachers, SuperStream, Stream, TopStudents, Course, Banner, Role, Permission, Event, FileContent, Quiz, Question, SocialMediaEntity, Wallet, Teacher, CreateTestquestionEntity, CreateSheetEntity];
 
 @Injectable()
 export class TenantManager {

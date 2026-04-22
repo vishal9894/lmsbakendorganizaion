@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, IsEnum, IsArray, IsDateString, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsEnum, IsArray, IsDateString, IsBoolean, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { QuestionType, TimeType, ExamMode } from '../entities/create-sheet-entity';
 
 export class CreateSheetDto {
@@ -16,7 +17,7 @@ export class CreateSheetDto {
 
     @IsOptional()
     @IsNumber()
-    questionNumber?: number;
+    totalQuestions?: number;
 
     @IsOptional()
     @IsEnum(QuestionType)
@@ -24,24 +25,30 @@ export class CreateSheetDto {
 
     @IsOptional()
     @IsArray()
-    @IsString({ each: true })
-    correctAnswers?: string[];
+    questions?: Array<{
+        questionNumber: number;
+        correctAnswer: string;
+    }>;
 
     @IsOptional()
     @IsEnum(TimeType)
-    timeType?: TimeType;
+    timerType?: TimeType;
 
     @IsOptional()
-    @IsNumber()
-    correctMarks?: number;
+    @IsString()
+    correctMarks?: string;
 
     @IsOptional()
-    @IsNumber()
-    wrongMarks?: number;
+    @IsString()
+    wrongMarks?: string;
 
     @IsOptional()
-    @IsNumber()
-    duration?: number;
+    @IsString()
+    duration?: string;
+
+    @IsOptional()
+    @IsString()
+    answerOptions?: string;
 
     @IsOptional()
     @IsBoolean()
@@ -52,34 +59,10 @@ export class CreateSheetDto {
     examMode?: ExamMode;
 
     @IsOptional()
-    @IsNumber()
-    bufferTime?: number;
+    @IsString()
+    bufferTime?: string;
 
     @IsOptional()
     @IsDateString()
-    startTime?: Date;
-
-    @IsOptional()
-    @IsDateString()
-    endTime?: Date;
-
-    @IsOptional()
-    @IsString()
-    optionA?: string;
-
-    @IsOptional()
-    @IsString()
-    optionB?: string;
-
-    @IsOptional()
-    @IsString()
-    optionC?: string;
-
-    @IsOptional()
-    @IsString()
-    optionD?: string;
-
-    @IsOptional()
-    @IsString()
-    optionE?: string;
+    examDateTime?: Date;
 }

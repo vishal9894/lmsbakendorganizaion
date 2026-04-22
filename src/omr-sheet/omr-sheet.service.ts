@@ -23,7 +23,35 @@ export class OmrSheetService {
     async create(subdomain: string, data: CreateSheetDto) {
         const repo = await this.getTenantRepository(subdomain);
 
-        const sheet = repo.create(data);
+        // Check if exam key already exists
+        if (data.examKey) {
+            const existing = await repo.findOne({ where: { examKey: data.examKey } });
+            if (existing) {
+                return {
+                    success: false,
+                    message: 'Exam key already exists. Cannot create duplicate.',
+                };
+            }
+        }
+
+        // Create single OMR sheet with questions array
+        const sheet = repo.create({
+            examKey: data.examKey,
+            title: data.title,
+            description: data.description,
+            totalQuestions: data.questions?.length || 0,
+            questionType: data.questionType,
+            questions: data.questions || [],
+            timerType: data.timerType,
+            correctMarks: parseFloat(data.correctMarks || '0'),
+            wrongMarks: parseFloat(data.wrongMarks || '0'),
+            duration: parseInt(data.duration || '0'),
+            answerOptions: parseInt(data.answerOptions || '4'),
+            status: data.status,
+            examMode: data.examMode,
+            bufferTime: parseInt(data.bufferTime || '0'),
+            examDateTime: data.examDateTime,
+        });
         await repo.save(sheet);
 
         return {
@@ -42,8 +70,71 @@ export class OmrSheetService {
 
         const sheets = await repo.find({
             where,
-            order: { questionNumber: 'ASC', createdAt: 'DESC' },
+            order: { createdAt: 'DESC' },
         });
+
+        return {
+            message: 'OMR Sheets retrieved successfully',
+            data: sheets,
+        };
+    }
+
+    async getAllExamKeys(subdomain: string) {
+        const repo = await this.getTenantRepository(subdomain);
+
+        const sheets = await repo.find({
+            select: ['examKey', 'title', 'createdAt'],
+            order: { createdAt: 'DESC' },
+        });
+
+        // Get unique exam keys with their info
+        const uniqueKeys: Array<{ examKey: string; title: string; createdAt: Date }> = [];
+        sheets.forEach((sheet) => {
+            if (!uniqueKeys.find(item => item.examKey === sheet.examKey)) {
+                uniqueKeys.push({
+                    examKey: sheet.examKey,
+                    title: sheet.title,
+                    createdAt: sheet.createdAt,
+                });
+            }
+        });
+
+        return {
+            message: 'All exam keys retrieved successfully',
+            count: uniqueKeys.length,
+            data: uniqueKeys,
+        };
+    }
+
+    async verifyExamKey(subdomain: string, examKey: string) {
+        const repo = await this.getTenantRepository(subdomain);
+
+        const existing = await repo.findOne({ where: { examKey } });
+
+        if (existing) {
+            return {
+                exists: true,
+                message: 'Exam key already exists',
+            };
+        }
+
+        return {
+            exists: false,
+            message: 'Exam key is available',
+        };
+    }
+
+    async findByExamKey(subdomain: string, examKey: string) {
+        const repo = await this.getTenantRepository(subdomain);
+
+        const sheets = await repo.find({
+            where: { examKey },
+            order: { createdAt: 'DESC' },
+        });
+
+        if (!sheets || sheets.length === 0) {
+            throw new NotFoundException('No OMR sheets found for this exam key');
+        }
 
         return {
             message: 'OMR Sheets retrieved successfully',

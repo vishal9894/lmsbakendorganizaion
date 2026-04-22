@@ -30,7 +30,7 @@ export class CreateSheetEntity {
     description: string;
 
     @Column({ nullable: true })
-    questionNumber: number;
+    totalQuestions: number;
 
     @Column({
         type: 'enum',
@@ -39,15 +39,18 @@ export class CreateSheetEntity {
     })
     questionType: QuestionType;
 
-    @Column({ type: 'simple-array', nullable: true })
-    correctAnswers: string[];
+    @Column({ type: 'jsonb', nullable: true })
+    questions: Array<{
+        questionNumber: number;
+        correctAnswer: string;
+    }>;
 
     @Column({
         type: 'enum',
         enum: TimeType,
         default: TimeType.COUNTDOWN,
     })
-    timeType: TimeType;
+    timerType: TimeType;
 
     @Column({ type: 'float', nullable: true, default: 0 })
     correctMarks: number;
@@ -57,6 +60,9 @@ export class CreateSheetEntity {
 
     @Column({ nullable: true, default: 0 })
     duration: number;
+
+    @Column({ nullable: true, default: 4 })
+    answerOptions: number;
 
     @Column({ type: 'boolean', default: true })
     status: boolean;
@@ -72,25 +78,7 @@ export class CreateSheetEntity {
     bufferTime: number;
 
     @Column({ type: 'timestamp', nullable: true })
-    startTime: Date;
-
-    @Column({ type: 'timestamp', nullable: true })
-    endTime: Date;
-
-    @Column({ type: 'text', nullable: true })
-    optionA: string;
-
-    @Column({ type: 'text', nullable: true })
-    optionB: string;
-
-    @Column({ type: 'text', nullable: true })
-    optionC: string;
-
-    @Column({ type: 'text', nullable: true })
-    optionD: string;
-
-    @Column({ type: 'text', nullable: true })
-    optionE: string;
+    examDateTime: Date;
 
     @CreateDateColumn()
     createdAt: Date;

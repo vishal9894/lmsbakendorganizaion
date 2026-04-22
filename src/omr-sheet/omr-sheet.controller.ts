@@ -46,6 +46,32 @@ export class OmrSheetController {
         return this.omrSheetService.findAll(subdomain, examKey);
     }
 
+    @Get('keys/all')
+    async getAllExamKeys(
+        @CurrentUser() user: CurrentUserData,
+    ) {
+        const subdomain = this.getSubdomain(user);
+        return this.omrSheetService.getAllExamKeys(subdomain);
+    }
+
+    @Get('verify-key/:examKey')
+    async verifyExamKey(
+        @CurrentUser() user: CurrentUserData,
+        @Param('examKey') examKey: string,
+    ) {
+        const subdomain = this.getSubdomain(user);
+        return this.omrSheetService.verifyExamKey(subdomain, examKey);
+    }
+
+    @Get('by-key/:examKey')
+    async findByExamKey(
+        @CurrentUser() user: CurrentUserData,
+        @Param('examKey') examKey: string,
+    ) {
+        const subdomain = this.getSubdomain(user);
+        return this.omrSheetService.findByExamKey(subdomain, examKey);
+    }
+
     @Get(':id')
     async findOne(
         @CurrentUser() user: CurrentUserData,

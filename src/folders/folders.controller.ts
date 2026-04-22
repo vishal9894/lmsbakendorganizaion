@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ForbiddenException, Req } from '@nestjs/common';
 import { FoldersService } from './folders.service';
 import { CreateFolderDto } from './dto/create-folder-dto';
 import { UpdateFolderDto } from './dto/update-folder-dto';
@@ -25,10 +25,14 @@ export class FoldersController {
     create(
         @CurrentUser() user: CurrentUserData,
         @Body() createFolderDto: CreateFolderDto,
+        @Req() req: any,
         @UploadedFile() file?: Express.Multer.File,
     ) {
         const subdomain = this.getSubdomain(user);
-        return this.foldersService.create(subdomain, createFolderDto);
+
+        const body = req.body;
+       
+        return this.foldersService.create(subdomain, body);
     }
 
     @Get()
