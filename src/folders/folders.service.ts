@@ -94,19 +94,18 @@ export class FoldersService {
             const eventRepo = await this.getEventRepo(subdomain);
             const fileRepo = await this.getfileRepo(subdomain);
 
-            const folder = await repo.findOne({ where: { parentId: id } });
-
+            const folder = await repo.find({ where: { parentId :id } });
             const events = await eventRepo.find({ where: { folderId: id } });
             const files = await fileRepo.find({ where: { parentId: id } });
 
 
             return {
                 message: 'Folder fetched successfully',
-                folder: {
-                    ...folder,
+                
+                    folder,
                     events,
                     files,
-                },
+                
             };
 
         } catch (error) {
@@ -140,6 +139,20 @@ export class FoldersService {
         return {
             message: 'Folder updated successfully',
             folder,
+        };
+    }
+
+    async getFolderInParentId(subdomain: string, parentId: string) {
+        const repo = await this.getTenantRepo(subdomain);
+
+        const folders = await repo.find({
+            where: { parentId },
+            
+        });
+
+        return {
+            message: 'Folders fetched successfully',
+            folders,
         };
     }
 

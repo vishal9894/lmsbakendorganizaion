@@ -11,6 +11,7 @@ export class Organization {
   @Column({ unique: true })
   subdomain!: string;
 
+  
   @Column()
   db_name!: string;
 

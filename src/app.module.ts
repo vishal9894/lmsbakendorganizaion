@@ -1,7 +1,8 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, ValidationPipe } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AdminModule } from './admin/admin.module';
@@ -53,7 +54,7 @@ import { OmrSheetModule } from './omr-sheet/omr-sheet.module';
         synchronize: true,
       }),
     }),
-    
+
     // TypeOrmModule.forRoot({
     //   type: 'postgres',
     //   url: process.env.DATABASE_URL,
@@ -65,7 +66,7 @@ import { OmrSheetModule } from './omr-sheet/omr-sheet.module';
     //   },
     // }),
 
-    
+
 
 
 
@@ -102,7 +103,21 @@ import { OmrSheetModule } from './omr-sheet/omr-sheet.module';
     OmrSheetModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+      useValue: new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

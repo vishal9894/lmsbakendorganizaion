@@ -10,6 +10,8 @@ import {
   ForbiddenException,
   UseInterceptors,
   UploadedFile,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { TopTeacherService } from './topteacher.service';
 import { CreateTopTeacherDto } from './dto/create-topteacher.dto';
@@ -24,8 +26,9 @@ export class TopTeacherController {
   constructor(private readonly topTeacherService: TopTeacherService) { }
 
   private getOrganizationId(user: CurrentUserData): string {
-    if (user.type === 'super_admin') {
-      throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account.');
+    // Allow super admin if they have organizationId (logged into specific org)
+    if (user.type === 'super_admin' && !user.organizationId) {
+      throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account or login with subdomain.');
     }
     if (!user.organizationId) {
       throw new ForbiddenException('No organization associated with this account');
@@ -35,6 +38,7 @@ export class TopTeacherController {
 
   @Post()
   @UseInterceptors(FileInterceptor('image'))
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   create(
     @CurrentUser() user: CurrentUserData,
     @Body() data: CreateTopTeacherDto,

@@ -10,6 +10,7 @@ import {
   ForbiddenException,
   UseInterceptors,
   UploadedFile,
+  Req,
 } from '@nestjs/common';
 import { StreamService } from './stream.service';
 import { CreateStreamDto } from './dto/create-stream.dto';
@@ -21,11 +22,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('stream')
 @UseGuards(TenantAuthGuard)
 export class StreamController {
-  constructor(private readonly streamService: StreamService) {}
+  constructor(private readonly streamService: StreamService) { }
 
   private getOrganizationId(user: CurrentUserData): string {
-    if (user.type === 'super_admin') {
-      throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account.');
+    // Allow super admin if they have organizationId (logged into specific org)
+    if (user.type === 'super_admin' && !user.organizationId) {
+      throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account or login with subdomain.');
     }
     if (!user.organizationId) {
       throw new ForbiddenException('No organization associated with this account');
@@ -34,14 +36,16 @@ export class StreamController {
   }
 
   @Post()
+  
   @UseInterceptors(FileInterceptor('image'))
   create(
     @CurrentUser() user: CurrentUserData,
     @Body() data: CreateStreamDto,
+    @Req() req: any,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     const organizationId = this.getOrganizationId(user);
-    return this.streamService.create(organizationId, data, file);
+    return this.streamService.create(organizationId, req.body, file);
   }
 
   @Get()

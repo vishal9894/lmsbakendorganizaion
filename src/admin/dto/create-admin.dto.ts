@@ -1,16 +1,21 @@
-import { IsEmail, IsString, MinLength, IsOptional, isBoolean } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
 
 export class CreateAdminDto {
+  @IsOptional()
   @IsString()
   @MinLength(2)
-  name!: string;
+  name?: string;
 
+  @IsOptional()
   @IsEmail()
-  email!: string;
+  email?: string;
 
+  image?:string
+
+  @IsOptional()
   @IsString()
   @MinLength(6)
-  password!: string;
+  password?: string;
 
   @IsOptional()
   @IsString()
@@ -21,7 +26,15 @@ export class CreateAdminDto {
   role?: string;
 
   @IsOptional()
- 
+  @IsString()
+  roleId?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+
+  @IsOptional()
   status?: boolean;
 }
 

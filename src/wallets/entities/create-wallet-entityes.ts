@@ -18,6 +18,7 @@ export class Wallet {
             to: (value: number) => value?.toString(),
             from: (value: string) => value ? parseFloat(value) : 0,
         },
+
     })
     balance!: number;
 

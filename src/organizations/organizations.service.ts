@@ -55,12 +55,12 @@ export class OrganizationsService {
       db_url: finalDbUrl,
     });
 
-    await this.orgRepo.save(org);
+   const data =  await this.orgRepo.save(org);
 
     return {
       message: 'Organization created',
-      url: `${subdomain}.yourapp.com`,
-    };
+      data
+      };
   }
 
 

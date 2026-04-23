@@ -21,8 +21,9 @@ export class PermissionController {
     constructor(private readonly permissionService: PermissionService) { }
 
     private getOrganizationId(user: CurrentUserData): string {
-        if (user.type === 'super_admin') {
-            throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account.');
+        // Allow super admin if they have organizationId (logged into specific org)
+        if (user.type === 'super_admin' && !user.organizationId) {
+            throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account or login with subdomain.');
         }
         if (!user.organizationId) {
             throw new ForbiddenException('No organization associated with this account');

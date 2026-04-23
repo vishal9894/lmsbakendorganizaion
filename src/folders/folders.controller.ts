@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ForbiddenException, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, ForbiddenException } from '@nestjs/common';
 import { FoldersService } from './folders.service';
 import { CreateFolderDto } from './dto/create-folder-dto';
 import { UpdateFolderDto } from './dto/update-folder-dto';
@@ -6,6 +6,7 @@ import { TenantAuthGuard } from '../common/guards/tenant-auth.guard';
 import { CurrentUser, type CurrentUserData } from '../common/decorators/current-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadedFile } from '@nestjs/common';
+import { Req } from '@nestjs/common';
 
 
 @Controller('folders')
@@ -29,10 +30,7 @@ export class FoldersController {
         @UploadedFile() file?: Express.Multer.File,
     ) {
         const subdomain = this.getSubdomain(user);
-
-        const body = req.body;
-       
-        return this.foldersService.create(subdomain, body);
+        return this.foldersService.create(subdomain, req.body);
     }
 
     @Get()
@@ -47,6 +45,15 @@ export class FoldersController {
     ) {
         const subdomain = this.getSubdomain(user);
         return this.foldersService.findOne(subdomain, id);
+    }
+
+    @Get('parent/:parentId')
+    getFolderInParentId(
+        @CurrentUser() user: CurrentUserData,
+        @Param('parentId') parentId: string,
+    ) {
+        const subdomain = this.getSubdomain(user);
+        return this.foldersService.getFolderInParentId(subdomain, parentId);
     }
 
     @Patch(':id')

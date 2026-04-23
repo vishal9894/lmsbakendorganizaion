@@ -7,6 +7,7 @@ import { AdminService } from './admin.service';
 import { Admin } from './entities/admin.entity';
 import { Organization } from '../organizations/entities/create-organization.entityes';
 import { AdminProfileMiddleware } from './admin-profile.middleware';
+import { S3Service } from 'src/common/services/s3.service';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { AdminProfileMiddleware } from './admin-profile.middleware';
     }),
   ],
   controllers: [AdminController],
-  providers: [AdminService, AdminProfileMiddleware],
+  providers: [AdminService, AdminProfileMiddleware ,S3Service],
   exports: [AdminProfileMiddleware],
 })
 export class AdminModule { }

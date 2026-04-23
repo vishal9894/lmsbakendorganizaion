@@ -70,13 +70,18 @@ export class RolesService {
             order: { name: 'ASC' },
         });
 
+        const rolesWithPermissionCount = roles.map(role => ({
+            ...role,
+            permissionCount: role.permissions?.length || 0
+        }));
+
         return {
             message: 'Roles retrieved successfully',
-            data: roles,
+            data: rolesWithPermissionCount,
         };
     }
 
-    async findOne(organizationId: string, id: number) {
+    async findOne(organizationId: string, id: string) {
         const { roleRepo } = await this.getTenantRepositories(organizationId);
 
         const role = await roleRepo.findOne({
@@ -94,7 +99,7 @@ export class RolesService {
         };
     }
 
-    async update(organizationId: string, id: number, data: UpdateRoleDto) {
+    async update(organizationId: string, id: string, data: UpdateRoleDto) {
         const { roleRepo, permissionRepo } = await this.getTenantRepositories(organizationId);
 
         const role = await roleRepo.findOne({
@@ -109,11 +114,13 @@ export class RolesService {
         if (data.name) role.name = data.name;
         if (data.description) role.description = data.description;
 
+        
         if (data.permissionIds !== undefined) {
             if (data.permissionIds.length > 0) {
                 const permissions = await permissionRepo.findBy({
                     id: In(data.permissionIds),
                 });
+               
                 role.permissions = permissions;
             } else {
                 role.permissions = [];
@@ -128,7 +135,7 @@ export class RolesService {
         };
     }
 
-    async remove(organizationId: string, id: number) {
+    async remove(organizationId: string, id: string) {
         const { roleRepo } = await this.getTenantRepositories(organizationId);
 
         const role = await roleRepo.findOne({

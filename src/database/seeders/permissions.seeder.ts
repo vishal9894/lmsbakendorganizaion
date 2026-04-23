@@ -208,7 +208,6 @@ export class PermissionsSeeder {
         console.log(`⚠️ Permission already exists: ${perm.name}`);
       }
     }
-
     return {
       message: 'Permissions seeded successfully',
       count: this.permissionsData.length,

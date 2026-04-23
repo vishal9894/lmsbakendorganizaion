@@ -21,8 +21,9 @@ export class RolesController {
     constructor(private readonly rolesService: RolesService) { }
 
     private getOrganizationId(user: CurrentUserData): string {
-        if (user.type === 'super_admin') {
-            throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account.');
+        // Allow super admin if they have organizationId (logged into specific org)
+        if (user.type === 'super_admin' && !user.organizationId) {
+            throw new ForbiddenException('Super admin cannot access organization-specific resources directly. Please use organization admin account or login with subdomain.');
         }
         if (!user.organizationId) {
             throw new ForbiddenException('No organization associated with this account');
@@ -35,6 +36,7 @@ export class RolesController {
         @CurrentUser() user: CurrentUserData,
         @Body() data: CreateRoleDto,
     ) {
+        console.log(data)
         const organizationId = this.getOrganizationId(user);
         return this.rolesService.create(organizationId, data);
     }
@@ -51,7 +53,7 @@ export class RolesController {
         @Param('id') id: string,
     ) {
         const organizationId = this.getOrganizationId(user);
-        return this.rolesService.findOne(organizationId, Number(id));
+        return this.rolesService.findOne(organizationId, id);
     }
 
     @Put(':id')
@@ -61,7 +63,8 @@ export class RolesController {
         @Body() data: UpdateRoleDto,
     ) {
         const organizationId = this.getOrganizationId(user);
-        return this.rolesService.update(organizationId, Number(id), data);
+
+        return this.rolesService.update(organizationId, id, data);
     }
 
     @Delete(':id')
@@ -70,6 +73,6 @@ export class RolesController {
         @Param('id') id: string,
     ) {
         const organizationId = this.getOrganizationId(user);
-        return this.rolesService.remove(organizationId, Number(id));
+        return this.rolesService.remove(organizationId, id);
     }
 }

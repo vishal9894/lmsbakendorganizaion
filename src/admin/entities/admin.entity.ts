@@ -11,8 +11,11 @@ export class Admin {
   @Column({ unique: true })
   email!: string;
 
-  @Column()
+  @Column({select: false})
   password!: string;
+
+  @Column({ nullable: true })
+  image?: string;
 
   @Column({ name: 'organization_id', nullable: true })
   organizationId!: string;
@@ -25,6 +28,9 @@ export class Admin {
 
   @Column({ name: 'role_id', nullable: true })
   roleId?: string;
+
+  @Column({ nullable: true })
+  phone?: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
