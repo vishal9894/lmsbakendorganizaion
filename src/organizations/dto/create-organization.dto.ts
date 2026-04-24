@@ -15,6 +15,14 @@ export class CreateOrganizationDto {
   @IsString()
   @IsOptional()
   db_url!: string;
+  
+  @IsString()
+  @IsOptional()
+  email!: string;
+  
+  @IsString()
+  @IsOptional()
+  phone!: string;
 
  
   @IsOptional()

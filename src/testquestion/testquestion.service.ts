@@ -139,16 +139,28 @@ export class TestquestionService {
     async remove(subdomain: string, id: string) {
         const repo = await this.getTenantRepository(subdomain);
 
+        // Delete All Records
+        if (id === 'all') {
+            const result = await repo.clear();
+
+            return {
+                message: 'All test questions deleted successfully',
+
+            };
+        }
+
+        // Delete Single Record
         const question = await repo.findOne({ where: { id } });
 
         if (!question) {
             throw new NotFoundException('Test question not found');
         }
 
-        await repo.remove(question);
+        await repo.delete(id);
 
         return {
             message: 'Test question deleted successfully',
+
         };
     }
 

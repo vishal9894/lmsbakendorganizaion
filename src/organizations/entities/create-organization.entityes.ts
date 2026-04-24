@@ -11,12 +11,17 @@ export class Organization {
   @Column({ unique: true })
   subdomain!: string;
 
-  
   @Column()
   db_name!: string;
 
   @Column()
   db_url!: string;
+
+  @Column({ nullable: true })
+  email!: string;
+
+  @Column({ nullable: true })
+  phone!: string;
 
   @Column({ default: 'active' })
   status!: string;
