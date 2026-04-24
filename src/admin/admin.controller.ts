@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, Param, Req, Delete, UseInterceptors, Uploa
 import { Request } from 'express';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
+import { UpdateAdminDto } from './dto/update-admin.dto';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TenantAuthGuard } from '../common/guards/tenant-auth.guard';
@@ -14,6 +15,7 @@ interface CurrentUserData {
     organizationId?: string;
     subdomain?: string;
     type?: string;
+    image?: string;
     permissions?: string[];
 }
 
@@ -25,6 +27,7 @@ interface AdminRequest extends Request {
         role: string;
         organizationId?: string;
         subdomain?: string;
+        image?: string;
         type: 'super_admin' | 'tenant_admin';
     };
 }
@@ -61,13 +64,17 @@ export class AdminController {
     findAll() {
         return this.adminService.findAll();
     }
+
+    // Get all organization admins without parameters
+    @Get('all-organization-admins')
+    getAllOrganizationAdmins() {
+        return this.adminService.getAllOrganizationAdmins();
+    }
+
     @Get('profile')
     @UseGuards(TenantAuthGuard)
-    getProfile(@CurrentUser() user: CurrentUserData) {
-        return {
-            message: 'Admin profile fetched successfully',
-            admin: user,
-        };
+    async getProfile(@CurrentUser() user: CurrentUserData) {
+        return this.adminService.getProfile(user);
     }
 
     @Post('switch-organization')
@@ -79,14 +86,22 @@ export class AdminController {
         return this.adminService.switchOrganization(user, body.organizationId);
     }
 
+    // Organization-based login - search across all organizations
+    @Post('organization-login')
+    organizationLogin(@Body() dto: any) {
+        return this.adminService.organizationLogin(dto);
+    }
+
     @Get(':id')
     findByOrganization(@Param('id') id: string) {
         return this.adminService.findByOrganization(id);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() dto: CreateAdminDto) {
-        return this.adminService.update(id, dto);
+    @UseInterceptors(FileInterceptor('image'))
+    update(@Param('id') id: string, @Body() dto: UpdateAdminDto, @UploadedFile() file: Express.Multer.File) {
+        console.log(dto);
+        return this.adminService.update(id, dto, file);
     }
 
     @Delete(':id')

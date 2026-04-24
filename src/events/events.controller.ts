@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile, Req } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event-dto';
 import { TenantAuthGuard } from '../common/guards/tenant-auth.guard';
@@ -18,18 +18,20 @@ export class EventsController {
     constructor(private readonly eventsService: EventsService) { }
 
     @Post()
-   @UseInterceptors(FileInterceptor('image'))
+    @UseInterceptors(FileInterceptor('image'))
     create(
         @CurrentUser() user: CurrentUserData,
         @Body() createEventDto: CreateEventDto,
+        @Req() req: any,
         @UploadedFile() file?: Express.Multer.File,
     ) {
         if (!user.subdomain) {
             throw new Error('Subdomain is required');
         }
-        return this.eventsService.create(user.subdomain, createEventDto, file);
-    }
 
+
+        return this.eventsService.create(user.subdomain, req.body, file);
+    }
     @Get()
     findAll(@CurrentUser() user: CurrentUserData) {
         if (!user.subdomain) {

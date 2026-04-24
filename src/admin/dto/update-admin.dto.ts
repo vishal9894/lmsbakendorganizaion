@@ -1,6 +1,6 @@
 import { IsEmail, IsString, MinLength, IsOptional, IsBoolean } from 'class-validator';
 
-export class CreateAdminDto {
+export class UpdateAdminDto {
   @IsOptional()
   @IsString()
   @MinLength(2)
@@ -35,10 +35,7 @@ export class CreateAdminDto {
   @IsString()
   phone?: string;
 
-
   @IsOptional()
-  @IsBoolean()
+  
   status?: boolean;
 }
-
-

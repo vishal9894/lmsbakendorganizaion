@@ -53,6 +53,7 @@ export class UsersService {
         if (existingUser) {
             throw new BadRequestException('Email already registered in this organization');
         }
+        
 
         const user = tenantUserRepo.create({
             name: data.name,
@@ -65,21 +66,20 @@ export class UsersService {
             joinDate: new Date(),
         });
 
+        const token = this.jwtService.sign({
+                sub: user.id,
+                email: user.email,
+                organizationId: org.id,
+                subdomain: org.subdomain,
+                role: 'user',
+            });
+
         await tenantUserRepo.save(user);
 
         return {
             message: 'User created successfully',
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                organizationId: org.id,
-            },
-            organization: {
-                id: org.id,
-                name: org.name,
-                subdomain: org.subdomain,
-            },
+           user,
+           token
         };
     }
 
@@ -138,11 +138,7 @@ export class UsersService {
                     phone_number: user.phone_number,
                     image: user.image,
                 },
-                organization: {
-                    id: org.id,
-                    name: org.name,
-                    subdomain: org.subdomain,
-                },
+                
             };
         }
 

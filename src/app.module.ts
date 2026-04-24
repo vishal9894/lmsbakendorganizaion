@@ -77,7 +77,7 @@ import { OmrSheetModule } from './omr-sheet/omr-sheet.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'default_secret_key',
+        secret: config.get<string>('JWT_SECRET') || 'your_super_secret_jwt_key_for_development_only_change_in_production',
         signOptions: { expiresIn: '7d' },
       }),
     }),

@@ -11,6 +11,16 @@ import { S3Service } from 'src/common/services/s3.service';
 import { Role } from 'src/roles/entities/role.entity';
 import { LoginAdminDto } from './dto/login-admin.dto';
 
+interface CurrentUserData {
+    id: string;
+    email: string;
+    role: string;
+    organizationId?: string;
+    subdomain?: string;
+    type?: string;
+    permissions?: string[];
+}
+
 @Injectable()
 export class AdminService {
     constructor(
@@ -197,104 +207,6 @@ export class AdminService {
                 throw error;
             }
             throw new InternalServerErrorException('Error during main admin login');
-        }
-    }
-
-    async organizationLogin(data: LoginAdminDto) {
-        try {
-            // Validate subdomain is provided
-            if (!data.subdomain) {
-                throw new BadRequestException('Subdomain is required for organization login');
-            }
-
-            // Find organization
-            const org = await this.orgRepo.findOne({
-                where: { subdomain: data.subdomain },
-            });
-
-            if (!org) {
-                throw new UnauthorizedException('Organization not found');
-            }
-
-            // Get connection to tenant database
-            const tenantDataSource = await this.tenantManager.getTenantConnection(org.subdomain);
-            const tenantAdminRepo = tenantDataSource.getRepository(Admin);
-
-            // Find admin in tenant database
-            const admin = await tenantAdminRepo.findOne({
-                where: { email: data.email },
-            });
-
-            if (!admin) {
-                throw new UnauthorizedException('Admin not found in organization');
-            }
-
-            // Validate password exists
-            if (!data.password || !admin.password) {
-                throw new UnauthorizedException('Password required');
-            }
-
-            // Verify password
-            const isPasswordValid = await bcrypt.compare(data.password, admin.password);
-            if (!isPasswordValid) {
-                throw new UnauthorizedException('Invalid password');
-            }
-
-            // Fetch role and permissions
-            let permissions: string[] = [];
-            let roleName: string;
-
-            if (!admin.roleId) {
-                throw new BadRequestException('Admin must have a role assigned');
-            }
-
-            const roleRepo = tenantDataSource.getRepository(Role);
-            const role = await roleRepo.findOne({
-                where: { id: admin.roleId },
-                relations: ['permissions'],
-            });
-
-            if (!role) {
-                throw new NotFoundException('Role not found');
-            }
-
-            roleName = role.name;
-            permissions = role.permissions?.map(p => p.name) || [];
-
-            // Generate JWT token for organization admin
-            const token = this.jwtService.sign({
-                sub: admin.id,
-                email: admin.email,
-                organizationId: org.id,
-                subdomain: org.subdomain,
-                role: roleName,
-                roleId: admin.roleId,
-                permissions: permissions,
-            });
-
-            return {
-                message: 'Organization admin login successful',
-                type: 'tenant_admin',
-                token,
-                admin: {
-                    id: admin.id,
-                    name: admin.name,
-                    email: admin.email,
-                    role: roleName,
-                    roleId: admin.roleId,
-                    permissions: permissions,
-                },
-                organization: {
-                    id: org.id,
-                    name: org.name,
-                    subdomain: org.subdomain,
-                },
-            };
-        } catch (error) {
-            if (error instanceof UnauthorizedException) {
-                throw error;
-            }
-            throw new InternalServerErrorException('Error during organization admin login');
         }
     }
 
@@ -518,30 +430,41 @@ export class AdminService {
             console.log('Org signup attempt for email:', data.email, 'orgId:', data.organizationId);
 
             // Find organization
+            console.log('Step 1: Finding organization with ID:', data.organizationId);
             const org = await this.orgRepo.findOne({
                 where: { id: data.organizationId },
             });
+            console.log('Organization found:', !!org);
 
             if (!org) {
                 throw new NotFoundException('Organization not found');
             }
 
+            console.log('Step 2: Getting tenant connection for subdomain:', org.subdomain);
             // Get connection to tenant database
             const tenantDataSource = await this.tenantManager.getTenantConnection(org.subdomain);
+            console.log('Tenant connection established');
+
             const tenantAdminRepo = tenantDataSource.getRepository(Admin);
+            console.log('Tenant admin repository created');
 
             // Check if admin already exists in organization database
+            console.log('Step 3: Checking if admin already exists');
             const existingAdmin = await tenantAdminRepo.findOne({
                 where: { email: data.email },
             });
+            console.log('Existing admin found:', !!existingAdmin);
 
             if (existingAdmin) {
                 throw new BadRequestException('Admin with this email already exists in organization');
             }
 
+            console.log('Step 4: Hashing password');
             // Hash password
             const hashedPassword = await bcrypt.hash(data.password, 10);
+            console.log('Password hashed successfully');
 
+            console.log('Step 5: Creating admin in tenant database');
             // Create admin in organization database
             const admin = tenantAdminRepo.create({
                 name: data.name,
@@ -550,9 +473,10 @@ export class AdminService {
                 organizationId: data.organizationId,
                 roleName: 'tenant_admin',
             });
+            console.log('Admin object created');
 
+            console.log('Step 6: Saving admin to tenant database');
             await tenantAdminRepo.save(admin);
-
             console.log('Organization admin created successfully');
 
             return {
@@ -572,12 +496,191 @@ export class AdminService {
                 },
             };
         } catch (error) {
+            console.log('Error in orgSignup:', error);
+            console.log('Error type:', error.constructor.name);
+            console.log('Error message:', error.message);
+
             if (error instanceof BadRequestException || error instanceof NotFoundException) {
                 throw error;
             }
-            throw new InternalServerErrorException('Error during organization admin signup');
+            throw new InternalServerErrorException('Error during organization admin signup: ' + error.message);
         }
     }
+
+    async getAllOrganizationAdmins() {
+        try {
+            // Get all organizations with basic error handling
+            let organizations;
+            try {
+                organizations = await this.orgRepo.find();
+            } catch (error) {
+                return {
+                    message: 'Error fetching organizations',
+                    admins: [],
+                    error: 'Database connection error'
+                };
+            }
+
+            if (!organizations || organizations.length === 0) {
+                return {
+                    message: 'No organizations found',
+                    totalOrganizations: 0,
+                    totalAdmins: 0,
+                    admins: [],
+                };
+            }
+
+            let allAdmins: any[] = [];
+            let successCount = 0;
+            let errorCount = 0;
+
+            // Process each organization safely
+            for (const org of organizations) {
+                try {
+                    // Skip if no subdomain
+                    if (!org.subdomain) {
+                        errorCount++;
+                        continue;
+                    }
+
+                    // Get tenant connection with timeout
+                    const tenantDataSource = await this.tenantManager.getTenantConnection(org.subdomain);
+
+                    // Get admin repository
+                    const tenantAdminRepo = tenantDataSource.getRepository(Admin);
+
+                    // Simple find without select to avoid field issues
+                    const admins = await tenantAdminRepo.find();
+
+                    // Add organization info safely
+                    const adminsWithOrg = admins;
+
+                    allAdmins = allAdmins.concat(adminsWithOrg);
+                    successCount++;
+                } catch (error) {
+                    errorCount++;
+                    // Continue processing other organizations
+                    continue;
+                }
+            }
+
+            return {
+                message: 'All organization admins fetched successfully',
+                totalOrganizations: organizations.length,
+                successfulOrganizations: successCount,
+                failedOrganizations: errorCount,
+                totalAdmins: allAdmins.length,
+                admins: allAdmins,
+            };
+        } catch (error) {
+            // Return safe response instead of throwing error
+            return {
+                message: 'Partial success - some organizations could not be accessed',
+                admins: [],
+                error: 'Service temporarily unavailable'
+            };
+        }
+    }
+
+    async organizationLogin(data: {
+        email: string;
+        password: string;
+    }) {
+        try {
+            console.log('Organization login attempt for email:', data.email);
+
+            // Get all organizations
+            const organizations = await this.orgRepo.find();
+
+            if (organizations.length === 0) {
+                throw new UnauthorizedException('No organizations found');
+            }
+
+            let foundAdmin: Admin | null = null;
+            let foundOrg: Organization | null = null;
+
+            // Search for admin across all tenant databases
+            for (const org of organizations) {
+                try {
+                    const tenantDataSource = await this.tenantManager.getTenantConnection(org.subdomain);
+                    const tenantAdminRepo = tenantDataSource.getRepository(Admin);
+
+                    const admin = await tenantAdminRepo.findOne({
+                        where: { email: data.email },
+                    });
+
+                    if (admin) {
+                        foundAdmin = admin;
+                        foundOrg = org;
+                        console.log('Admin found in organization:', org.name, 'subdomain:', org.subdomain);
+                        break;
+                    }
+                } catch (error) {
+                    // Continue searching other organizations
+                    continue;
+                }
+            }
+
+            if (!foundAdmin || !foundOrg) {
+                throw new UnauthorizedException('Admin not found in any organization. Please check email or use normal-login if you are a main admin.');
+            }
+
+            console.log('Admin found in organization database:', !!foundAdmin);
+
+            // Handle password if not exists
+            if (!foundAdmin.password && data.password) {
+                // Set password if not exists
+                const hashedPassword = await bcrypt.hash(data.password, 10);
+                foundAdmin.password = hashedPassword;
+
+                // Save back to tenant database
+                const tenantDataSource = await this.tenantManager.getTenantConnection(foundOrg.subdomain);
+                const tenantAdminRepo = tenantDataSource.getRepository(Admin);
+                await tenantAdminRepo.save(foundAdmin);
+                console.log('Password set for admin in organization');
+            } else if (foundAdmin.password && data.password) {
+                // Verify password if exists
+                const isPasswordValid = await bcrypt.compare(data.password, foundAdmin.password);
+                if (!isPasswordValid) {
+                    throw new UnauthorizedException('Invalid password');
+                }
+            }
+
+            // Generate JWT token
+            const token = this.jwtService.sign({
+                sub: foundAdmin.id,
+                email: foundAdmin.email,
+                organizationId: foundOrg.id,
+                subdomain: foundOrg.subdomain,
+                role: 'tenant_admin',
+                permissions: [],
+            });
+
+            return {
+                message: 'Organization admin login successful',
+                type: 'organization_admin',
+                token,
+                admin: {
+                    id: foundAdmin.id,
+                    name: foundAdmin.name,
+                    email: foundAdmin.email,
+                    role: 'tenant_admin',
+                    permissions: [],
+                },
+                organization: {
+                    id: foundOrg.id,
+                    name: foundOrg.name,
+                    subdomain: foundOrg.subdomain,
+                },
+            };
+        } catch (error) {
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            throw new InternalServerErrorException('Error during organization admin login');
+        }
+    }
+
 
     async login(data: {
         email: string;
@@ -903,11 +1006,29 @@ export class AdminService {
         };
     }
 
-    async update(id: string, data: any) {
+    async update(id: string, data: any, file?: Express.Multer.File) {
+        // Filter out undefined values to avoid setting them to null
+        const updateData: any = Object.keys(data).reduce((acc, key) => {
+            if (data[key] !== undefined) {
+                acc[key] = data[key];
+            }
+            return acc;
+        }, {});
+
+        // If no valid data to update, return early
+        if (Object.keys(updateData).length === 0) {
+            throw new BadRequestException('No valid data provided for update');
+        }
+
+        if (file) {
+            const imageUrl = await this.s3Service.upload(file, 'admin-images');
+            updateData.image = imageUrl;
+        }
+
         // Try to find and update in main database (super admin)
         const superAdmin = await this.adminRepo.findOne({ where: { id } });
         if (superAdmin) {
-            await this.adminRepo.update(id, data);
+            await this.adminRepo.update(id, updateData);
             const updatedAdmin = await this.adminRepo.findOne({ where: { id } });
             return {
                 message: 'Super admin updated successfully',
@@ -927,8 +1048,12 @@ export class AdminService {
                 const tenantAdmin = await tenantAdminRepo.findOne({ where: { id } });
 
                 if (tenantAdmin) {
+                    if (file) {
+                        const imageUrl = await this.s3Service.upload(file, 'admin-images');
+                        updateData.image = imageUrl;
+                    }
                     // Update admin in tenant database
-                    await tenantAdminRepo.update(id, data);
+                    await tenantAdminRepo.update(id, updateData);
                     const updatedAdmin = await tenantAdminRepo.findOne({ where: { id } });
                     return {
                         message: 'Organization admin updated successfully',
@@ -998,6 +1123,60 @@ export class AdminService {
         }
 
         throw new NotFoundException('Admin not found in any database');
+    }
+
+    async getProfile(user: CurrentUserData) {
+        try {
+            // If user has organizationId, fetch from tenant database
+            if (user.organizationId && user.subdomain) {
+                const tenantDataSource = await this.tenantManager.getTenantConnection(user.subdomain);
+                const tenantAdminRepo = tenantDataSource.getRepository(Admin);
+
+                const admin = await tenantAdminRepo.findOne({
+                    where: { id: user.id },
+                    select: ['id', 'name', 'email', 'image', 'roleName', 'status', 'organizationId', 'phone', 'createdAt']
+                });
+
+                if (!admin) {
+                    throw new NotFoundException('Admin not found in organization database');
+                }
+
+                return {
+                    message: 'Admin profile fetched successfully',
+                    admin: {
+                        ...admin,
+                        role: admin.roleName,
+                        permissions: user.permissions,
+                        type: user.type || 'tenant_admin'
+                    }
+                };
+            }
+
+            // Fetch from main database (super admin)
+            const admin = await this.adminRepo.findOne({
+                where: { id: user.id },
+                select: ['id', 'name', 'email', 'image', 'roleName', 'status', 'phone', 'createdAt']
+            });
+
+            if (!admin) {
+                throw new NotFoundException('Admin not found in main database');
+            }
+
+            return {
+                message: 'Admin profile fetched successfully',
+                admin: {
+                    ...admin,
+                    role: admin.roleName,
+                    permissions: user.permissions,
+                    type: user.type || 'super_admin'
+                }
+            };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            throw new InternalServerErrorException('Error fetching admin profile');
+        }
     }
 
     async switchOrganization(user: any, organizationId: string) {

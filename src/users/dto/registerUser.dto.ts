@@ -27,12 +27,10 @@ export class RegisterDto {
   @IsString()
   phone_number?: string;
 
-  // optional at register (usually generated after login)
   @IsOptional()
   @IsString()
   refreshtoken?: string;
 
-  // join date when user registers
   @IsOptional()
-  joinDate!: string;
+  joinDate?: string;
 }
