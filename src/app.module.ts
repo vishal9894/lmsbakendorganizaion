@@ -41,30 +41,30 @@ import { OmrSheetModule } from './omr-sheet/omr-sheet.module';
     }),
 
     //  ✅ Correct TypeORM async config
-    TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST') || 'localhost',
-        port: 5432,
-        username: config.get<string>('DB_USER') || 'postgres',
-        password: config.get<string>('DB_PASSWORD') || 'postgres',
-        database: config.get<string>('DB_NAME') || 'platform_db',
-        entities: [Organization, Admin],
-        synchronize: true,
-      }),
-    }),
-
-    // TypeOrmModule.forRoot({
-    //   type: 'postgres',
-    //   url: process.env.DATABASE_URL,
-    //   entities: [Organization, Admin], // Only main DB entities
-    //   autoLoadEntities: true,
-    //   synchronize: true,
-    //   ssl: {
-    //     rejectUnauthorized: false,
-    //   },
+    // TypeOrmModule.forRootAsync({
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => ({
+    //     type: 'postgres',
+    //     host: config.get<string>('DB_HOST') || 'localhost',
+    //     port: 5432,
+    //     username: config.get<string>('DB_USER') || 'postgres',
+    //     password: config.get<string>('DB_PASSWORD') || 'postgres',
+    //     database: config.get<string>('DB_NAME') || 'platform_db',
+    //     entities: [Organization, Admin],
+    //     synchronize: true,
+    //   }),
     // }),
+
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      url: process.env.DATABASE_URL,
+      entities: [Organization, Admin], // Only main DB entities
+      autoLoadEntities: true,
+      synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    }),
 
 
 
